@@ -7,19 +7,25 @@ using namespace std;
 const int width = 800;
 const int height = width;
 const float sirka_pole = width/8;
-
+bool proces_hrani = false;
+bool konec_hry = false;
+char kdo_je_na_rade = 'b';
+int prave_hraje_index;
+vector<Vector2> moznosti;
 
 class Panacek{
 public:
     Color barva;
     Vector2 pozice;
     Texture2D textura;
+    char barva_char;
     string typ;
-    Panacek(Vector2 position, string ityp, Texture2D itextura, Color ibarva){
+    Panacek(Vector2 position, string ityp, Texture2D itextura, Color ibarva, char ibarva_char){
         pozice = position;
         typ = ityp;
         textura = itextura;
         barva = ibarva;
+        barva_char = ibarva_char;
     }
 };
 
@@ -49,6 +55,59 @@ void vykresli_hraci_plochu(){
     }
 }
 
+void vyhodit(Vector2 z_jake_pozice){
+    for (int p = 0; p<panacci.size();p++){
+        if (panacci[p].pozice.y == z_jake_pozice.y && panacci[p].pozice.x == z_jake_pozice.x && kdo_je_na_rade != panacci[p].barva_char){
+            if (panacci[p].typ == "kral") konec_hry = true; else panacci.erase(panacci.begin()+p);
+            break;
+        }
+    }
+}
+
+vector <Vector2> vypis_moznosti(float index_panacka){
+    vector <Vector2> moznustky;
+    string typ_panacka = panacci[index_panacka].typ;
+    int index_bit = panacci[index_panacka].pozice.x + panacci[index_panacka].pozice.y*8;
+    char barva_panacka = panacci[index_panacka].barva_char;
+    //
+    return moznustky;
+}
+void kontrola_mysi(){
+    if (!proces_hrani){
+        float mousex = GetMouseX(), mousey = GetMouseY();
+        for (int p = 0; p<panacci.size();p++){
+            if ((abs(panacci[p].pozice.x-mousex)<sirka_pole/2||abs(panacci[p].pozice.y-mousey)<sirka_pole/2)&&kdo_je_na_rade==panacci[p].barva_char){
+                proces_hrani = true;
+                prave_hraje_index = p;
+                moznosti = vypis_moznosti(prave_hraje_index);
+            }
+        }
+    } else{
+        int index_moznosti;
+        if (IsKeyPressed(KEY_ONE)) index_moznosti=0, proces_hrani=false;
+        //musis pak dodělat další možnosti a pracovat s počtem a jak to regulovat
+        if (!proces_hrani){
+            if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+            if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+            panacci[prave_hraje_index].pozice = moznosti[index_moznosti];
+            int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
+            if (kdo_je_na_rade=='b'){
+                bily_bit.set(pozice_bit);
+                if (cerny_bit.test(pozice_bit)) cerny_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                kdo_je_na_rade='c';
+            }
+            if (kdo_je_na_rade=='c'){
+                cerny_bit.set(pozice_bit);
+                if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                kdo_je_na_rade='b';
+            }
+        }
+        if (IsKeyPressed(KEY_ESCAPE)){
+            proces_hrani=false;
+        }
+    }
+}
+
 Texture2D vez, kun, strelec, kral, kralovna, pesek;
 void nacti_textury(){
     vez = LoadTexture("vez.png");
@@ -72,7 +131,7 @@ int main(){
         if (s == 4) akt_tex=kralovna, akt_typ = "kralovna";
         if (s == 3) akt_tex=kral, akt_typ = "kral";
         if (s > 7) akt_tex=pesek, akt_typ = "pesek";
-        panacci.push_back(Panacek(pos,akt_typ,akt_tex, WHITE));
+        panacci.push_back(Panacek(pos,akt_typ,akt_tex, WHITE,'b'));
     }
     for (int z=0; z <16;z++){
         cerny_bit.set(63-z);
@@ -86,14 +145,19 @@ int main(){
         if (z == 3) akt_tex=kralovna, akt_typ = "kralovna";
         if (z == 4) akt_tex=kral, akt_typ = "kral";
         if (z > 7) akt_tex=pesek, akt_typ = "pesek";
-        panacci.push_back(Panacek(pos,akt_typ,akt_tex,BLACK));
+        panacci.push_back(Panacek(pos,akt_typ,akt_tex,BLACK, 'c'));
     }
     while (!WindowShouldClose()){
+        float dt = GetFrameTime();
         BeginDrawing();
         ClearBackground(WHITE);
         vykresli_hraci_plochu();
         vykresli_panacky();
-        float dt = GetFrameTime();
+        if (!konec_hry){
+            kontrola_mysi();
+        } else{
+            DrawText("GAME OVER",0,0,70,RED);
+        }
         EndDrawing();
     }
     CloseWindow();
