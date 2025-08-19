@@ -212,6 +212,7 @@ int main(){
         if (s == 3) akt_tex=kral, akt_typ = "kral";
         if (s > 7) akt_tex=pesek, akt_typ = "pesek";
         panacci.push_back(Panacek(pos,akt_typ,akt_tex, WHITE,'b'));
+        panacci.push_back(Panacek(pos,akt_typ,akt_tex, WHITE,'b'));
     }
     for (int z=0; z <16;z++){
         cerny_bit.set(63-z);
