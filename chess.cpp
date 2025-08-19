@@ -71,7 +71,58 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
     char barva_panacka = panacci[index_panacka].barva_char;
     if (barva_panacka == 'b' && bily_bit.test(index_bit)) return policko_je_mozne;
     if (barva_panacka == 'c' && cerny_bit.test(index_bit)) return policko_je_mozne;
-    //if (typ_panacka == "vez" && (panacek_pos.x!=))
+    if (typ_panacka == "vez" || typ_panacka == "kralovna"){
+        if (panacek_pos.x == policko_pos.x){
+            for (int i=1; i< abs(policko_pos.y-panacek_pos.y);i++){
+                if (policko_pos.y >panacek_pos.y){
+                    if(cerny_bit.test(index_bit+8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit+8*i)) return policko_je_mozne;
+                } else {
+                    if(cerny_bit.test(index_bit-8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit-8*i)) return policko_je_mozne;
+                }
+            }
+            policko_je_mozne = true;
+        }
+        if (panacek_pos.y == policko_pos.y){
+            for (int i=1; i< abs(policko_pos.x-panacek_pos.x);i++){
+                if (policko_pos.x >panacek_pos.x){
+                    if(cerny_bit.test(index_bit+i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit+i)) return policko_je_mozne;
+                } else {
+                    if(cerny_bit.test(index_bit-i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit-i)) return policko_je_mozne;
+                }
+            }
+            policko_je_mozne = true;
+        }
+        
+    }
+    if (typ_panacka == "strelec" || typ_panacka == "kralovna"){
+        if (panacek_pos.x-policko_pos.x == panacek_pos.y-policko_pos.y){ //doleva nahoru nebo doprava dolu
+            for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++)
+                if (panacek_pos.x > policko_pos.x){ //doleva nahoru
+                    if(cerny_bit.test(index_bit-i-8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit-i-8*i)) return policko_je_mozne;
+                } else{
+                    if(cerny_bit.test(index_bit+i+8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit+i+8*i)) return policko_je_mozne;
+                }
+            policko_je_mozne = true;
+        }
+        if (panacek_pos.x-policko_pos.x == policko_pos.y-panacek_pos.y){ //doprava nahoru nebo doleva dolu
+            for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++)
+                if (panacek_pos.x > policko_pos.x){ //doleva dolu
+                    if(cerny_bit.test(index_bit-i+8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit-i+8*i)) return policko_je_mozne;
+                } else{
+                    if(cerny_bit.test(index_bit+i-8*i)) return policko_je_mozne;
+                    if(bily_bit.test(index_bit+i-8*i)) return policko_je_mozne;
+                }
+            policko_je_mozne = true;
+        }
+    }
+    return policko_je_mozne;
     // pridej pro kazdy typ vypis moznosti kam se muze dostat (pozor na to aby neskočil na spoluhrace)
 }
 void kontrola_mysi(){
