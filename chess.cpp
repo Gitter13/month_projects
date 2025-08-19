@@ -11,7 +11,6 @@ bool proces_hrani = false;
 bool konec_hry = false;
 char kdo_je_na_rade = 'b';
 int prave_hraje_index;
-vector<Vector2> moznosti;
 
 class Panacek{
 public:
@@ -40,7 +39,7 @@ void vykresli_panacky(){
         float akt_height = sirka_pole-20;
         float akt_width = tex.width/(tex.height/(sirka_pole-20));
         Rectangle src = {0, 0, (float)tex.width, (float)tex.height};  // celý obrázek
-        Rectangle dst = {panacci[p].pozice.x, panacci[p].pozice.y, akt_width, akt_height}; // cílová pozice
+        Rectangle dst = {panacci[p].pozice.x*sirka_pole+sirka_pole/2, panacci[p].pozice.y*sirka_pole+sirka_pole/2, akt_width, akt_height}; // cílová pozice
         Vector2 origin = {akt_width/2, akt_height/2}; // střed textury
         DrawTexturePro(tex, src,dst,origin,0,panacci[p].barva);
     }
@@ -64,32 +63,40 @@ void vyhodit(Vector2 z_jake_pozice){
     }
 }
 
-vector <Vector2> vypis_moznosti(float index_panacka){
-    vector <Vector2> moznustky;
+bool kontrola(int index_panacka, Vector2 policko_pos){
+    bool policko_je_mozne = false;
     string typ_panacka = panacci[index_panacka].typ;
     int index_bit = panacci[index_panacka].pozice.x + panacci[index_panacka].pozice.y*8;
+    Vector2 panacek_pos = panacci[index_panacka].pozice;
     char barva_panacka = panacci[index_panacka].barva_char;
-    //
-    return moznustky;
+    if (barva_panacka == 'b' && bily_bit.test(index_bit)) return policko_je_mozne;
+    if (barva_panacka == 'c' && cerny_bit.test(index_bit)) return policko_je_mozne;
+    //if (typ_panacka == "vez" && (panacek_pos.x!=))
+    // pridej pro kazdy typ vypis moznosti kam se muze dostat (pozor na to aby neskočil na spoluhrace)
 }
 void kontrola_mysi(){
     if (!proces_hrani){
         float mousex = GetMouseX(), mousey = GetMouseY();
         for (int p = 0; p<panacci.size();p++){
-            if ((abs(panacci[p].pozice.x-mousex)<sirka_pole/2||abs(panacci[p].pozice.y-mousey)<sirka_pole/2)&&kdo_je_na_rade==panacci[p].barva_char){
+            float rozdil_x = abs((panacci[p].pozice.x*sirka_pole +sirka_pole/2)-mousex);
+            float rozdil_y = abs((panacci[p].pozice.y*sirka_pole +sirka_pole/2)-mousey);
+            if (rozdil_x<sirka_pole/2&&rozdil_y<sirka_pole/2&&kdo_je_na_rade==panacci[p].barva_char){
                 proces_hrani = true;
                 prave_hraje_index = p;
-                moznosti = vypis_moznosti(prave_hraje_index);
+                break;
             }
         }
     } else{
-        int index_moznosti;
-        if (IsKeyPressed(KEY_ONE)) index_moznosti=0, proces_hrani=false;
-        //musis pak dodělat další možnosti a pracovat s počtem a jak to regulovat
-        if (!proces_hrani){
+        Vector2 policko_s_mysi;
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+            float mouse_x = GetMouseX(), mouse_y = GetMouseY();
+            policko_s_mysi = {float(int(mouse_x/sirka_pole)), float(int(mouse_y/sirka_pole))};
+            proces_hrani=false;
+        }
+        if (!proces_hrani && kontrola(prave_hraje_index,policko_s_mysi)){
             if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
             if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-            panacci[prave_hraje_index].pozice = moznosti[index_moznosti];
+            panacci[prave_hraje_index].pozice = {policko_s_mysi.x, policko_s_mysi.y};
             int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
             if (kdo_je_na_rade=='b'){
                 bily_bit.set(pozice_bit);
@@ -122,7 +129,7 @@ int main(){
     nacti_textury();
     for (int s=0; s <16;s++){
         bily_bit.set(s);
-        Vector2 pos = {(sirka_pole/2)+(sirka_pole*(s%8)), (sirka_pole/2)+(int(s/8)*sirka_pole)};
+        Vector2 pos = {s%8,int(s/8)};
         Texture2D akt_tex;
         string akt_typ;
         if (s == 0 || s == 7) akt_tex=vez, akt_typ = "vez";
@@ -135,7 +142,7 @@ int main(){
     }
     for (int z=0; z <16;z++){
         cerny_bit.set(63-z);
-        Vector2 pos = {(sirka_pole/2)+(sirka_pole*(z%8)), height-(sirka_pole/2+int(z/8)*sirka_pole)};
+        Vector2 pos = {z%8, height/sirka_pole-int(z/8)-1};
         cout << "Pozice x: "<< pos.x <<endl;
         Texture2D akt_tex;
         string akt_typ;
