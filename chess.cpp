@@ -142,10 +142,9 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 if (barva_panacka == 'b' && cerny_bit.test(index_bit+1+8)) policko_je_mozne = true;
                 if (barva_panacka == 'c' && bily_bit.test(index_bit+1-8)) policko_je_mozne = true;
             }
-        } else if ((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6gi)) policko_je_mozne = true;
+        } else if ((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6)) policko_je_mozne = true;
     }
     return policko_je_mozne;
-    // pridej pro kazdy typ vypis moznosti kam se muze dostat (pozor na to aby neskočil na spoluhrace)
 }
 void kontrola_mysi(){
     if (!proces_hrani && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
