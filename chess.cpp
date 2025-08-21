@@ -27,10 +27,27 @@ public:
         barva_char = ibarva_char;
     }
 };
-
+class sipka{
+public:
+    Vector2 pozice_odkud;
+    Vector2 pozice_kam;
+    sipka(Vector2 odkud, Vector2 kam){
+        pozice_kam=kam;
+        pozice_odkud = odkud;
+    }
+    void draw(){
+        if (pozice_kam.x != pozice_odkud.x || pozice_kam.y != pozice_odkud.y){
+            Vector2 odkud_real = {pozice_odkud.x*sirka_pole+sirka_pole/2, pozice_odkud.y*sirka_pole+sirka_pole/2};
+            Vector2 kam_real = {pozice_kam.x*sirka_pole+sirka_pole/2, pozice_kam.y*sirka_pole+sirka_pole/2};
+            DrawLineEx(odkud_real,kam_real, 6,GRAY);
+            DrawCircle(kam_real.x,kam_real.y, 10,GRAY);
+        }
+    }
+};
 bitset <64> bily_bit;
 bitset<64> cerny_bit;
 
+sipka ukazatel = sipka({0,0},{0,0});
 vector <Panacek> panacci;
 
 void vykresli_panacky(){
@@ -38,8 +55,10 @@ void vykresli_panacky(){
         Texture2D tex = panacci[p].textura;
         float akt_height = sirka_pole-20;
         float akt_width = tex.width/(tex.height/(sirka_pole-20));
+        int pridavek_peska = 0;
+        if (panacci[p].typ == "pesek") akt_height -=30, akt_width = tex.width/(tex.height/(sirka_pole-50)), pridavek_peska=15;
         Rectangle src = {0, 0, (float)tex.width, (float)tex.height};  // celý obrázek
-        Rectangle dst = {panacci[p].pozice.x*sirka_pole+sirka_pole/2, panacci[p].pozice.y*sirka_pole+sirka_pole/2, akt_width, akt_height}; // cílová pozice
+        Rectangle dst = {panacci[p].pozice.x*sirka_pole+sirka_pole/2, panacci[p].pozice.y*sirka_pole+sirka_pole/2+pridavek_peska, akt_width, akt_height}; // cílová pozice
         Vector2 origin = {akt_width/2, akt_height/2}; // střed textury
         DrawTexturePro(tex, src,dst,origin,0,panacci[p].barva);
     }
@@ -146,6 +165,7 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
     }
     return policko_je_mozne;
 }
+
 void kontrola_mysi(){
     if (!proces_hrani && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         float mousex = GetMouseX(), mousey = GetMouseY();
@@ -164,13 +184,12 @@ void kontrola_mysi(){
             float mouse_x = GetMouseX(), mouse_y = GetMouseY();
             policko_s_mysi = {float(int(mouse_x/sirka_pole)), float(int(mouse_y/sirka_pole))};
             proces_hrani=false;
-            cout << "Policko s mysi souradnice: " << int(mouse_x/sirka_pole) << " | " << int(mouse_y/sirka_pole) << endl;
         }
         if (!proces_hrani && kontrola(prave_hraje_index,policko_s_mysi)){
             if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
             if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-            panacci[prave_hraje_index].pozice = {policko_s_mysi.x, policko_s_mysi.y};
-            cout << "Policko kam se odebral: " << panacci[prave_hraje_index].pozice.x << " | " << panacci[prave_hraje_index].pozice.y << endl;
+            ukazatel.pozice_odkud = panacci[prave_hraje_index].pozice; ukazatel.pozice_kam = policko_s_mysi;
+            panacci[prave_hraje_index].pozice = policko_s_mysi;
             int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
             if (kdo_je_na_rade=='b'){
                 bily_bit.set(pozice_bit);
@@ -232,6 +251,7 @@ int main(){
         ClearBackground(WHITE);
         vykresli_hraci_plochu();
         vykresli_panacky();
+        ukazatel.draw();
         if (!konec_hry){
             kontrola_mysi();
             if (kdo_je_na_rade=='c') DrawText("cerní",10,10,20,BLACK);
