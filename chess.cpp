@@ -10,7 +10,7 @@ const float sirka_pole = width/8;
 bool proces_hrani = false;
 bool konec_hry = false;
 char kdo_je_na_rade = 'b';
-int prave_hraje_index;
+int prave_hraje_index = -1;
 
 class Panacek{
 public:
@@ -161,12 +161,13 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 if (barva_panacka == 'b' && cerny_bit.test(index_bit+1+8)) policko_je_mozne = true;
                 if (barva_panacka == 'c' && bily_bit.test(index_bit+1-8)) policko_je_mozne = true;
             }
-        } else if ((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6)) policko_je_mozne = true;
+        } else if (policko_pos.x == panacek_pos.x&&((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6))) policko_je_mozne = true;
     }
     return policko_je_mozne;
 }
 
 void kontrola_mysi(){
+    if (!proces_hrani) prave_hraje_index = -1;
     if (!proces_hrani && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         float mousex = GetMouseX(), mousey = GetMouseY();
         for (int p = 0; p<panacci.size();p++){
@@ -200,9 +201,6 @@ void kontrola_mysi(){
                 if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
                 kdo_je_na_rade='b';
             }
-        }
-        if (IsKeyPressed(KEY_ESCAPE)){
-            proces_hrani=false;
         }
     }
 }
@@ -250,6 +248,7 @@ int main(){
         BeginDrawing();
         ClearBackground(WHITE);
         vykresli_hraci_plochu();
+        if (prave_hraje_index !=-1) DrawRectangleV({panacci[prave_hraje_index].pozice.x*sirka_pole, panacci[prave_hraje_index].pozice.y*sirka_pole}, {sirka_pole,sirka_pole},PINK);
         vykresli_panacky();
         ukazatel.draw();
         if (!konec_hry){
