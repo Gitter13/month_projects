@@ -266,7 +266,7 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 if (barva_panacka == 'b' && cerny_bit.test(index_bit+1+8)) policko_je_mozne = true;
                 if (barva_panacka == 'c' && bily_bit.test(index_bit+1-8)) policko_je_mozne = true;
             }
-        } else if (policko_pos.x == panacek_pos.x&&((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6))) policko_je_mozne = true;
+        } else if (policko_pos.x == panacek_pos.x&&((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1 && !cerny_bit.test(index_bit+16))||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6 && !bily_bit.test(index_bit-16)))) policko_je_mozne = true;
     }
     return policko_je_mozne;
 }
@@ -274,18 +274,7 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
 bool kontrola_šachu(Vector2 pozice_krale, char barva_krale){
     for (int p = 0; p<panacci.size();p++){
         if (panacci[p].barva_char != barva_krale){
-            if (panacci[p].typ != "pesek"){
-                if (kontrola(p, pozice_krale)) return true;
-            } else{
-                if (pozice_krale.x-panacci[p].pozice.x == -1){ // jde doleva
-                    if (panacci[p].barva_char == 'b' && pozice_krale.y-panacci[p].pozice.y==1) return true;
-                    if (panacci[p].barva_char == 'c' && pozice_krale.y-panacci[p].pozice.y==-1) return true;
-                }
-                else if (pozice_krale.x-panacci[p].pozice.x == 1){ // jde napravo
-                    if (panacci[p].barva_char == 'b' && pozice_krale.y-panacci[p].pozice.y==1) return true;
-                    if (panacci[p].barva_char == 'c' && pozice_krale.y-panacci[p].pozice.y==-1) return true;
-                }   
-            }
+            if (kontrola(p, pozice_krale)) return true;
         }
     }
     return false;
