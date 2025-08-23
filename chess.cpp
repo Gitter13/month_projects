@@ -11,6 +11,8 @@ bool proces_hrani = false;
 bool konec_hry = false;
 char kdo_je_na_rade = 'b';
 int prave_hraje_index = -1;
+vector <bool> rosada_mozna_bila = {true, true};
+vector <bool> rosada_mozna_cerna = {true, true}; 
 
 class Panacek{
 public:
@@ -81,7 +83,15 @@ void vyhodit(Vector2 z_jake_pozice){
         }
     }
 }
+int najdi (Vector2 jaka_pozice){
+    for (int p = 0; p<panacci.size();p++){
+        if (panacci[p].pozice.y == jaka_pozice.y && panacci[p].pozice.x == jaka_pozice.x){
+            return p;
+        }
+    }
+}
 
+bool rosada_probiha = false;
 bool kontrola(int index_panacka, Vector2 policko_pos){
     bool policko_je_mozne = false;
     string typ_panacka = panacci[index_panacka].typ;
@@ -90,8 +100,80 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
     Vector2 panacek_pos = panacci[index_panacka].pozice;
     char barva_panacka = panacci[index_panacka].barva_char;
     if (policko_pos.x == panacek_pos.x && policko_pos.y == panacek_pos.y) return policko_je_mozne;
-    if (barva_panacka == 'b' && bily_bit.test(index_bit_pole)) return policko_je_mozne;
-    if (barva_panacka == 'c' && cerny_bit.test(index_bit_pole)) return policko_je_mozne;
+    if (barva_panacka == 'b' && bily_bit.test(index_bit_pole)){
+        // kod::::rosada::<::<
+        if (typ_panacka=="kral"){
+            if (policko_pos.x==0 && policko_pos.y==0 && rosada_mozna_bila[0]){ //bila rosada ta vlevo (kratsi)
+                for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
+                    if (cerny_bit.test(panacek_pos.x-i) || bily_bit.test(panacek_pos.x-i)) return policko_je_mozne;
+                }
+                policko_je_mozne = true;
+                rosada_probiha = true;
+                //vezicka
+                bily_bit.reset(0);
+                bily_bit.set(2);
+                panacci[najdi({0,0})].pozice = {2,0};
+                //kralicek
+                bily_bit.reset(index_bit);
+                bily_bit.set(1);
+                panacci[index_panacka].pozice = {1,0};
+                ukazatel.pozice_odkud = {2,0}; ukazatel.pozice_kam = {1,0};
+            }
+            else if(policko_pos.y==0 && policko_pos.x==7 && rosada_mozna_bila[1]){ //bila vpravo (delsi)
+                for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
+                    if (cerny_bit.test(panacek_pos.x+i) || bily_bit.test(panacek_pos.x+i)) return policko_je_mozne;
+                }
+                policko_je_mozne = true;
+                rosada_probiha = true;
+                //vezicka
+                bily_bit.reset(7);
+                bily_bit.set(4);
+                panacci[najdi({7,0})].pozice = {4,0};
+                //kralicek
+                bily_bit.reset(index_bit);
+                bily_bit.set(index_bit+2);
+                panacci[index_panacka].pozice = {5,0};
+                ukazatel.pozice_odkud = {4,0}; ukazatel.pozice_kam = {5,0};
+            } else return policko_je_mozne;
+        } else return policko_je_mozne;
+    }
+    if (barva_panacka == 'c' && cerny_bit.test(index_bit_pole)){
+        // kodik:::<<#:::rosada
+        if (typ_panacka=="kral"){
+            if (policko_pos.x==0 && policko_pos.y==7 && rosada_mozna_cerna[0]){ //cerna vlevo (delsi)
+                for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
+                    if (cerny_bit.test(index_bit-i) || bily_bit.test(index_bit-i)) return policko_je_mozne; 
+                }
+                policko_je_mozne = true;
+                rosada_probiha = true;
+                //vezicka
+                cerny_bit.reset(8*7);
+                cerny_bit.set(8*7+3);
+                panacci[najdi({0,7})].pozice = {3,7};
+                //kralicek
+                cerny_bit.reset(index_bit);
+                cerny_bit.set(8*7+2);
+                panacci[index_panacka].pozice = {2,7};
+                ukazatel.pozice_odkud = {3,7}; ukazatel.pozice_kam = {2,7};
+            }
+            else if(policko_pos.y==7 && policko_pos.x==7 && rosada_mozna_cerna[1]){ //cerna vpravo (kratsi)
+                for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
+                    if (cerny_bit.test(index_bit+i) || bily_bit.test(index_bit+i)) return policko_je_mozne;
+                }
+                policko_je_mozne = true;
+                rosada_probiha = true;
+                //vezicka
+                cerny_bit.reset(7*8+7);
+                cerny_bit.set(7*8+5);
+                panacci[najdi({7,7})].pozice = {5,7};
+                //kralicek
+                cerny_bit.reset(index_bit);
+                cerny_bit.set(7*8+6);
+                panacci[index_panacka].pozice = {6,7};
+                ukazatel.pozice_odkud = {5,7}; ukazatel.pozice_kam = {6,7};
+            } else return policko_je_mozne;
+        } else return policko_je_mozne;
+    }
     if (typ_panacka == "vez" || typ_panacka == "kralovna"){
             if (panacek_pos.x == policko_pos.x){
                 for (int i=1; i< abs(policko_pos.y-panacek_pos.y);i++){
@@ -104,6 +186,15 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                     }
                 }
                 policko_je_mozne = true;
+                if (typ_panacka=="vez"){
+                    if (panacek_pos.x ==0){
+                        if (barva_panacka=='b') rosada_mozna_bila[0]=false;
+                        if (barva_panacka=='c') rosada_mozna_cerna[0]=false;
+                    } else if (panacek_pos.x ==7){
+                        if (barva_panacka=='b') rosada_mozna_bila[1]=false;
+                        if (barva_panacka=='c') rosada_mozna_cerna[1]=false;
+                    }
+                }
             }
             if (panacek_pos.y == policko_pos.y){
                 for (int i=1; i< abs(policko_pos.x-panacek_pos.x);i++){
@@ -116,6 +207,15 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                     }
                 }
                 policko_je_mozne = true;
+                if (typ_panacka=="vez"){
+                    if (panacek_pos.x ==0){
+                        if (barva_panacka=='b') rosada_mozna_bila[0]=false;
+                        if (barva_panacka=='c') rosada_mozna_cerna[0]=false;
+                    } else if (panacek_pos.x ==7){
+                        if (barva_panacka=='b') rosada_mozna_bila[1]=false;
+                        if (barva_panacka=='c') rosada_mozna_cerna[1]=false;
+                    }
+                }
             }
             
         }
@@ -148,7 +248,11 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
             if (abs(policko_pos.x-panacek_pos.x) ==2 && abs(policko_pos.y-panacek_pos.y) ==1) policko_je_mozne = true;
         }
     if (typ_panacka == "kral"){
-        if (abs(policko_pos.x-panacek_pos.x) <= 1 && abs(policko_pos.y-panacek_pos.y) <=1) policko_je_mozne = true;
+        if (abs(policko_pos.x-panacek_pos.x) <= 1 && abs(policko_pos.y-panacek_pos.y) <=1){
+            policko_je_mozne = true;
+            if (barva_panacka=='b') rosada_mozna_bila = {false,false};
+            if (barva_panacka == 'c') rosada_mozna_cerna = {false,false};
+        }
     }
     if (typ_panacka == "pesek"){
         if ((policko_pos.y-1 == panacek_pos.y && barva_panacka=='b')||(barva_panacka == 'c' && policko_pos.y+1 == panacek_pos.y)){
@@ -187,19 +291,25 @@ void kontrola_mysi(){
             proces_hrani=false;
         }
         if (!proces_hrani && kontrola(prave_hraje_index,policko_s_mysi)){
-            if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-            if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-            ukazatel.pozice_odkud = panacci[prave_hraje_index].pozice; ukazatel.pozice_kam = policko_s_mysi;
-            panacci[prave_hraje_index].pozice = policko_s_mysi;
-            int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
-            if (kdo_je_na_rade=='b'){
-                bily_bit.set(pozice_bit);
-                if (cerny_bit.test(pozice_bit)) cerny_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
-                kdo_je_na_rade='c';
-            } else if (kdo_je_na_rade=='c'){
-                cerny_bit.set(pozice_bit);
-                if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
-                kdo_je_na_rade='b';
+            if (!rosada_probiha){
+                if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+                if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+                ukazatel.pozice_odkud = panacci[prave_hraje_index].pozice; ukazatel.pozice_kam = policko_s_mysi;
+                panacci[prave_hraje_index].pozice = policko_s_mysi;
+                int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
+                if (kdo_je_na_rade=='b'){
+                    bily_bit.set(pozice_bit);
+                    if (cerny_bit.test(pozice_bit)) cerny_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                    kdo_je_na_rade='c';
+                } else if (kdo_je_na_rade=='c'){
+                    cerny_bit.set(pozice_bit);
+                    if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                    kdo_je_na_rade='b';
+                }
+            } else{
+                rosada_probiha = false;
+                if (kdo_je_na_rade=='c') rosada_mozna_cerna = {false,false}, kdo_je_na_rade='b';
+                else if (kdo_je_na_rade=='b') rosada_mozna_bila = {false, false}, kdo_je_na_rade ='c';
             }
         }
     }
