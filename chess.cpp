@@ -250,13 +250,14 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
     if (typ_panacka == "kral"){
         if (abs(policko_pos.x-panacek_pos.x) <= 1 && abs(policko_pos.y-panacek_pos.y) <=1){
             policko_je_mozne = true;
-            if (barva_panacka=='b') rosada_mozna_bila = {false,false};
-            if (barva_panacka == 'c') rosada_mozna_cerna = {false,false};
         }
     }
     if (typ_panacka == "pesek"){
         if ((policko_pos.y-1 == panacek_pos.y && barva_panacka=='b')||(barva_panacka == 'c' && policko_pos.y+1 == panacek_pos.y)){
-            if (policko_pos.x == panacek_pos.x) policko_je_mozne = true;
+            if (policko_pos.x == panacek_pos.x){
+                if (barva_panacka == 'b' && !cerny_bit.test(index_bit+8)) policko_je_mozne = true;
+                if (barva_panacka == 'c' && !bily_bit.test(index_bit-8)) policko_je_mozne = true;
+            }
             else if (policko_pos.x-panacek_pos.x == -1){ // jde doleva
                 if (barva_panacka == 'b' && cerny_bit.test(index_bit-1+8)) policko_je_mozne = true;
                 if (barva_panacka == 'c' && bily_bit.test(index_bit-1-8)) policko_je_mozne = true;
@@ -268,6 +269,26 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
         } else if (policko_pos.x == panacek_pos.x&&((policko_pos.y-2 == panacek_pos.y && barva_panacka=='b' && panacek_pos.y ==1)||(barva_panacka == 'c' && policko_pos.y+2 == panacek_pos.y && panacek_pos.y==6))) policko_je_mozne = true;
     }
     return policko_je_mozne;
+}
+
+bool kontrola_šachu(Vector2 pozice_krale, char barva_krale){
+    for (int p = 0; p<panacci.size();p++){
+        if (panacci[p].barva_char != barva_krale){
+            if (panacci[p].typ != "pesek"){
+                if (kontrola(p, pozice_krale)) return true;
+            } else{
+                if (pozice_krale.x-panacci[p].pozice.x == -1){ // jde doleva
+                    if (panacci[p].barva_char == 'b' && pozice_krale.y-panacci[p].pozice.y==1) return true;
+                    if (panacci[p].barva_char == 'c' && pozice_krale.y-panacci[p].pozice.y==-1) return true;
+                }
+                else if (pozice_krale.x-panacci[p].pozice.x == 1){ // jde napravo
+                    if (panacci[p].barva_char == 'b' && pozice_krale.y-panacci[p].pozice.y==1) return true;
+                    if (panacci[p].barva_char == 'c' && pozice_krale.y-panacci[p].pozice.y==-1) return true;
+                }   
+            }
+        }
+    }
+    return false;
 }
 
 void kontrola_mysi(){
@@ -292,20 +313,26 @@ void kontrola_mysi(){
         }
         if (!proces_hrani && kontrola(prave_hraje_index,policko_s_mysi)){
             if (!rosada_probiha){
-                if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-                if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
-                ukazatel.pozice_odkud = panacci[prave_hraje_index].pozice; ukazatel.pozice_kam = policko_s_mysi;
-                panacci[prave_hraje_index].pozice = policko_s_mysi;
-                int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
-                if (kdo_je_na_rade=='b'){
-                    bily_bit.set(pozice_bit);
-                    if (cerny_bit.test(pozice_bit)) cerny_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
-                    kdo_je_na_rade='c';
-                } else if (kdo_je_na_rade=='c'){
-                    cerny_bit.set(pozice_bit);
-                    if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
-                    kdo_je_na_rade='b';
-                }
+                if (panacci[prave_hraje_index].typ != "kral" || !kontrola_šachu(policko_s_mysi, panacci[prave_hraje_index].barva_char)){
+                    if (panacci[prave_hraje_index].typ == "kral"){
+                        if (panacci[prave_hraje_index].barva_char=='b') rosada_mozna_bila = {false,false};
+                        if (panacci[prave_hraje_index].barva_char == 'c') rosada_mozna_cerna = {false,false};
+                    }
+                    if (kdo_je_na_rade=='b') bily_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+                    if (kdo_je_na_rade=='c') cerny_bit.reset(panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8);
+                    ukazatel.pozice_odkud = panacci[prave_hraje_index].pozice; ukazatel.pozice_kam = policko_s_mysi;
+                    panacci[prave_hraje_index].pozice = policko_s_mysi;
+                    int pozice_bit = panacci[prave_hraje_index].pozice.x + panacci[prave_hraje_index].pozice.y*8;
+                    if (kdo_je_na_rade=='b'){
+                        bily_bit.set(pozice_bit);
+                        if (cerny_bit.test(pozice_bit)) cerny_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                        kdo_je_na_rade='c';
+                    } else if (kdo_je_na_rade=='c'){
+                        cerny_bit.set(pozice_bit);
+                        if (bily_bit.test(pozice_bit)) bily_bit.reset(pozice_bit), vyhodit(panacci[prave_hraje_index].pozice);
+                        kdo_je_na_rade='b';
+                    }
+                }else cout<<"NoOo sebevrazda"<<endl;
             } else{
                 rosada_probiha = false;
                 if (kdo_je_na_rade=='c') rosada_mozna_cerna = {false,false}, kdo_je_na_rade='b';
@@ -314,6 +341,7 @@ void kontrola_mysi(){
         }
     }
 }
+
 
 Texture2D vez, kun, strelec, kral, kralovna, pesek;
 void nacti_textury(){
