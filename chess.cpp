@@ -272,12 +272,22 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
 }
 
 bool kontrola_šachu(Vector2 pozice_krale, char barva_krale){
+    bool returnujeme = false;
+    bool vratit_b = false, vratit_c = false;
+    //tyhle bitsety jsou proto abych je nastavila jako kdyby ten král na tý pozici byl hlavně kvůli peškům
+    if (cerny_bit.test(pozice_krale.x+pozice_krale.y*8)) vratit_c = true, cerny_bit.reset(pozice_krale.x+pozice_krale.y*8); if (bily_bit.test(pozice_krale.x+pozice_krale.y*8)) vratit_b = true, bily_bit.reset(pozice_krale.x+pozice_krale.y*8);
+    if (barva_krale =='b') bily_bit.set(pozice_krale.x+pozice_krale.y*8); else if (barva_krale =='c') cerny_bit.set(pozice_krale.x+pozice_krale.y*8);
     for (int p = 0; p<panacci.size();p++){
         if (panacci[p].barva_char != barva_krale){
-            if (kontrola(p, pozice_krale)) return true;
+            if (kontrola(p, pozice_krale)){
+                returnujeme = true;
+                break;
+            }
         }
     }
-    return false;
+    bily_bit.reset(pozice_krale.x+pozice_krale.y*8);cerny_bit.reset(pozice_krale.x+pozice_krale.y*8);
+    if (vratit_c)cerny_bit.set(pozice_krale.x+pozice_krale.y*8); if (vratit_b)bily_bit.set(pozice_krale.x+pozice_krale.y*8);
+    return returnujeme;
 }
 
 void kontrola_mysi(){
