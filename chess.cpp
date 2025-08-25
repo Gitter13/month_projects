@@ -92,6 +92,8 @@ int najdi (Vector2 jaka_pozice){
 }
 
 bool rosada_probiha = false;
+Vector2 vez_byla, vez_bude, kral_byl, kral_bude;
+string rosada_typ;
 bool kontrola(int index_panacka, Vector2 policko_pos){
     bool policko_je_mozne = false;
     string typ_panacka = panacci[index_panacka].typ;
@@ -109,15 +111,9 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 }
                 policko_je_mozne = true;
                 rosada_probiha = true;
-                //vezicka
-                bily_bit.reset(0);
-                bily_bit.set(2);
-                panacci[najdi({0,0})].pozice = {2,0};
-                //kralicek
-                bily_bit.reset(index_bit);
-                bily_bit.set(1);
-                panacci[index_panacka].pozice = {1,0};
-                ukazatel.pozice_odkud = {2,0}; ukazatel.pozice_kam = {1,0};
+
+                rosada_typ = "bila_vlevo";
+
             }
             else if(policko_pos.y==0 && policko_pos.x==7 && rosada_mozna_bila[1]){ //bila vpravo (delsi)
                 for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
@@ -125,15 +121,9 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 }
                 policko_je_mozne = true;
                 rosada_probiha = true;
-                //vezicka
-                bily_bit.reset(7);
-                bily_bit.set(4);
-                panacci[najdi({7,0})].pozice = {4,0};
-                //kralicek
-                bily_bit.reset(index_bit);
-                bily_bit.set(index_bit+2);
-                panacci[index_panacka].pozice = {5,0};
-                ukazatel.pozice_odkud = {4,0}; ukazatel.pozice_kam = {5,0};
+
+                rosada_typ = "bila_vpravo";
+
             } else return policko_je_mozne;
         } else return policko_je_mozne;
     }
@@ -146,15 +136,9 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 }
                 policko_je_mozne = true;
                 rosada_probiha = true;
-                //vezicka
-                cerny_bit.reset(8*7);
-                cerny_bit.set(8*7+3);
-                panacci[najdi({0,7})].pozice = {3,7};
-                //kralicek
-                cerny_bit.reset(index_bit);
-                cerny_bit.set(8*7+2);
-                panacci[index_panacka].pozice = {2,7};
-                ukazatel.pozice_odkud = {3,7}; ukazatel.pozice_kam = {2,7};
+                
+                rosada_typ = "cerna_vlevo";
+
             }
             else if(policko_pos.y==7 && policko_pos.x==7 && rosada_mozna_cerna[1]){ //cerna vpravo (kratsi)
                 for (int i=1; i<abs(panacek_pos.x-policko_pos.x);i++){
@@ -162,15 +146,9 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
                 }
                 policko_je_mozne = true;
                 rosada_probiha = true;
-                //vezicka
-                cerny_bit.reset(7*8+7);
-                cerny_bit.set(7*8+5);
-                panacci[najdi({7,7})].pozice = {5,7};
-                //kralicek
-                cerny_bit.reset(index_bit);
-                cerny_bit.set(7*8+6);
-                panacci[index_panacka].pozice = {6,7};
-                ukazatel.pozice_odkud = {5,7}; ukazatel.pozice_kam = {6,7};
+
+                rosada_typ = "cerna_vpravo";
+
             } else return policko_je_mozne;
         } else return policko_je_mozne;
     }
@@ -334,8 +312,23 @@ void kontrola_mysi(){
                 }else cout<<"NoOo sebevrazda"<<endl;
             } else{
                 rosada_probiha = false;
-                if (kdo_je_na_rade=='c') rosada_mozna_cerna = {false,false}, kdo_je_na_rade='b';
-                else if (kdo_je_na_rade=='b') rosada_mozna_bila = {false, false}, kdo_je_na_rade ='c';
+                if (rosada_typ == "bila_vlevo") vez_byla = {0,0}, vez_bude = {2,0}, kral_byl = {3,0}, kral_bude = {1,0};
+                if (rosada_typ == "bila_vpravo") vez_byla = {7,0}, vez_bude = {4,0}, kral_byl = {3,0}, kral_bude = {5,0};
+                if (rosada_typ == "cerna_vlevo") vez_byla = {0,7}, vez_bude = {3,7}, kral_byl = {4,7}, kral_bude = {2,7};
+                if (rosada_typ == "cerna_vpravo") vez_byla = {7,7}, vez_bude = {5,7}, kral_byl = {4,7}, kral_bude = {6,7};
+                if (!kontrola_šachu(panacci[prave_hraje_index].pozice, panacci[prave_hraje_index].barva_char) && !kontrola_šachu(kral_bude, panacci[prave_hraje_index].barva_char)){
+                    if (kdo_je_na_rade=='c') rosada_mozna_cerna = {false,false}, kdo_je_na_rade='b';
+                    else if (kdo_je_na_rade=='b') rosada_mozna_bila = {false, false}, kdo_je_na_rade ='c';
+                    //vezicka
+                    cerny_bit.reset(vez_byla.x+vez_byla.y*8);
+                    cerny_bit.set(vez_bude.x+vez_bude.y*8);
+                    panacci[najdi(vez_byla)].pozice = vez_bude;
+                    //kralicek
+                    cerny_bit.reset(kral_byl.y*8+kral_byl.x);
+                    cerny_bit.set(kral_bude.y*8+kral_bude.x);
+                    panacci[najdi(kral_byl)].pozice = kral_bude;
+                    ukazatel.pozice_odkud = vez_bude; ukazatel.pozice_kam = kral_bude;
+                }
             }
         }
     }
