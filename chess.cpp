@@ -12,7 +12,9 @@ bool konec_hry = false;
 char kdo_je_na_rade = 'b';
 int prave_hraje_index = -1;
 vector <bool> rosada_mozna_bila = {true, true};
-vector <bool> rosada_mozna_cerna = {true, true}; 
+vector <bool> rosada_mozna_cerna = {true, true};
+bool je_sach_b = false;
+bool je_sach_c = false;
 
 class Panacek{
 public:
@@ -102,6 +104,7 @@ bool kontrola(int index_panacka, Vector2 policko_pos){
     int index_bit_pole = policko_pos.x + policko_pos.y*8;
     Vector2 panacek_pos = panacci[index_panacka].pozice;
     char barva_panacka = panacci[index_panacka].barva_char;
+    if ((barva_panacka == 'b' && !bily_mezibit.test(index_bit)) || (barva_panacka == 'c' && !cerny_mezibit.test(index_bit))) return policko_je_mozne; //kontrolujeme jestli se vůbec s panáčkem v bitsetu počítá
     if (policko_pos.x == panacek_pos.x && policko_pos.y == panacek_pos.y) return policko_je_mozne;
     if (barva_panacka == 'b' && bily_mezibit.test(index_bit_pole)){
         // kod::::rosada::<::<
@@ -259,6 +262,15 @@ bool kontrola_šachu(Vector2 pozice_krale, char barva_krale){
     }
     return false;
 }
+bool je_šach(char barva){
+    for (int p=0; p<panacci.size();p++){
+        if (panacci[p].typ == "kral" && panacci[p].barva_char == barva && kontrola_šachu(panacci[p].pozice, panacci[p].barva_char)){
+            return true;
+            break;
+        }
+    }
+    return false;
+}
 
 void kontrola_mysi(){
     if (!proces_hrani) prave_hraje_index = -1;
@@ -293,7 +305,7 @@ void kontrola_mysi(){
                     cerny_mezibit.set(pozice_bit);
                     if (bily_mezibit.test(pozice_bit)) bily_mezibit.reset(pozice_bit), vyhodime =true;
                 }
-                if (panacci[prave_hraje_index].typ != "kral" || !kontrola_šachu(policko_s_mysi, panacci[prave_hraje_index].barva_char)){
+                if ((panacci[prave_hraje_index].typ != "kral" || !kontrola_šachu(policko_s_mysi, panacci[prave_hraje_index].barva_char))&&(panacci[prave_hraje_index].typ == "kral" || !je_šach(panacci[prave_hraje_index].barva_char))){
                     if (panacci[prave_hraje_index].typ == "kral"){
                         if (panacci[prave_hraje_index].barva_char=='b') rosada_mozna_bila = {false,false};
                         if (panacci[prave_hraje_index].barva_char == 'c') rosada_mozna_cerna = {false,false};
@@ -356,7 +368,11 @@ void nacti_textury(){
 
 void vykresli_sach(){
     for (int p=0; p<panacci.size();p++){
-        if (panacci[p].typ == "kral" && kontrola_šachu(panacci[p].pozice, panacci[p].barva_char)) DrawTextureEx(sach, {panacci[p].pozice.x*sirka_pole, panacci[p].pozice.y*sirka_pole},0, sirka_pole/sach.height, WHITE);
+        if (panacci[p].typ == "kral" && kontrola_šachu(panacci[p].pozice, panacci[p].barva_char)){
+            DrawTextureEx(sach, {panacci[p].pozice.x*sirka_pole, panacci[p].pozice.y*sirka_pole},0, sirka_pole/sach.height, WHITE);
+            if (panacci[p].barva_char == 'b') je_sach_b = true;
+            if (panacci[p].barva_char == 'c') je_sach_c = true;
+        }
     }
 }
 int main(){
